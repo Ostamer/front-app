@@ -1,5 +1,6 @@
 {
   "name": "front-app",
+  "homepage": "https://ostamer.github.io/front-app",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
