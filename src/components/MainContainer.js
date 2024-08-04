@@ -1,60 +1,62 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 
 const MainContainer = () => {
-  const [isRecording, setIsRecording] = useState(false);
-  const [audioUrl, setAudioUrl] = useState(null);
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
+  const [inputText, setInputText] = useState("");
+  const [pdfUrl, setPdfUrl] = useState(null);
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
-      };
-      mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        setAudioUrl(audioUrl);
-        audioChunksRef.current = [];
-      };
-      mediaRecorderRef.current.start();
-      setIsRecording(true);
-    } catch (error) {
-      console.error("Error accessing the microphone: ", error);
-    }
+  const handleTextChange = (event) => {
+    setInputText(event.target.value);
   };
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
+  const handleTextAndGetPdf = async () => {
+    if (!inputText) return;
+
+    try {
+      const response = await fetch("https://myfirstapp-w2u6.onrender.com/api/upload-audio/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: inputText }),
+      });
+
+      if (response.ok) {
+        const pdfBlob = await response.blob();
+        setPdfUrl(URL.createObjectURL(pdfBlob));
+      } else {
+        console.error("Ошибка отправки текста");
+      }
+    } catch (error) {
+      console.error("Ошибка:", error);
     }
   };
 
   return (
     <div className="bg-gray-900 min-h-screen flex items-center justify-center">
       <div className="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center">
-        <p className="text-lg mb-4">Нажмите для записи аудио</p>
-        {isRecording ? (
-          <button
-            onClick={stopRecording}
-            className="bg-red-500 text-white p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-700"
-          >
-            Остановить запись
-          </button>
-        ) : (
-          <button
-            onClick={startRecording}
-            className="bg-blue-500 text-white p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700"
-          >
-            Запись
-          </button>
-        )}
-        {audioUrl && (
+        <p className="text-lg mb-4">Введите текст для создания заявки</p>
+        <textarea
+          value={inputText}
+          onChange={handleTextChange}
+          className="w-full p-2 mb-4 border border-gray-300 rounded-lg"
+          rows="4"
+          placeholder="Введите текст здесь..."
+        ></textarea>
+        <button
+          onClick={handleTextAndGetPdf}
+          className="bg-blue-500 text-white p-2 rounded-lg"
+        >
+          Отправить текст и получить PDF
+        </button>
+        {pdfUrl && (
           <div className="mt-4">
-            <audio controls src={audioUrl}></audio>
+            <a
+              href={pdfUrl}
+              download="transcription.pdf"
+              className="bg-yellow-500 text-white p-2 mt-2 rounded-lg"
+            >
+              Скачать PDF
+            </a>
           </div>
         )}
       </div>
