@@ -12,7 +12,7 @@ const MainContainer = () => {
     if (!inputText) return;
 
     try {
-      const response = await fetch("http://localhost:8000/api/upload-audio/", {
+      const response = await fetch("https://myfirstapp-w2u6.onrender.com/api/upload-audio/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
